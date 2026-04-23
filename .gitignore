@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+
+# uv
+.uv/
+uv.lock
+
+# Env
+.env
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+.idea
