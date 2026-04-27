@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import app.models  # ensure all models are registered in SQLAlchemy metadata
 from app.routers.auth import router as auth_router
 from app.routers.questions import router as questions_router
 
