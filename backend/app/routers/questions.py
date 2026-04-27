@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.question import Question
 from app.models.option import Option
 from app.core.deps import get_current_user
-from app.schemas.questions import QuestionCreate, QuestionUpdate, QuestionResponse
+from app.schemas.question import QuestionCreate, QuestionUpdate, QuestionResponse
 
 router = APIRouter(prefix="/api/questions", tags=["questions"])
 
@@ -25,7 +25,7 @@ async def create_question(
         creator_id=current_user.id,
     )
     db.add(question)
-    await db.flush()  # get question.id before adding options
+    await db.flush()  
 
     for opt in body.options:
         option = Option(

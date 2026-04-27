@@ -20,7 +20,10 @@ class Room(Base):
     room_code: Mapped[str] = mapped_column(String(8), unique=True, nullable=False, index=True)
     host_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     collection_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("collections.id"), nullable=True)
-    status: Mapped[RoomStatus] = mapped_column(Enum(RoomStatus), default=RoomStatus.WAITING)
+    status: Mapped[RoomStatus] = mapped_column(
+    Enum(RoomStatus, values_callable=lambda x: [e.value for e in x]),
+    default=RoomStatus.WAITING,
+        )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     host: Mapped["User"] = relationship(back_populates="rooms")
