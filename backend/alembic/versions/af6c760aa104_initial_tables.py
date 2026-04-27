@@ -67,7 +67,7 @@ def upgrade() -> None:
     sa.Column('room_code', sa.String(length=8), nullable=False),
     sa.Column('host_id', sa.UUID(), nullable=False),
     sa.Column('collection_id', sa.UUID(), nullable=True),
-    sa.Column('status', sa.Enum('WAITING', 'ACTIVE', 'FINISHED', name='roomstatus'), nullable=False),
+    sa.Column('status', sa.Enum('waiting', 'active', 'finished', name='roomstatus'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['collection_id'], ['collections.id'], ),
     sa.ForeignKeyConstraint(['host_id'], ['users.id'], ),
