@@ -6,6 +6,7 @@ from app.routers.questions import router as questions_router
 from app.routers.collections import router as collections_router
 from app.routers.rooms import router as rooms_router
 from app.routers.game import router as game_router
+from app.routers.leaderboard import router as leaderboard_router
 from app.core.redis import close_redis
 
 
@@ -30,6 +31,7 @@ app.include_router(questions_router)
 app.include_router(collections_router)
 app.include_router(rooms_router)
 app.include_router(game_router)
+app.include_router(leaderboard_router)
 
 
 @app.get("/health")
