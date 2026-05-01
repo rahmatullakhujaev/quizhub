@@ -23,12 +23,10 @@ services:
     ports:
       - "6379:6379"
 
-  backend:
+  backend-1:
     build: ./backend
     restart: always
     env_file: .env
-    ports:
-      - "8000:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -36,6 +34,29 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+
+  backend-2:
+    build: ./backend
+    restart: always
+    env_file: .env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend-1
+      - backend-2
 
 volumes:
   pgdata:
