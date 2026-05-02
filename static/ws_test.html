@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizHub – Game Tester</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108, 92, 231, 0.3);
+    --green: #00cec9;
+    --red: #ff6b6b;
+    --yellow: #ffd93d;
+    --text: #e4e6ef;
+    --muted: #8b8fa3;
+    --font-mono: 'Space Mono', monospace;
+    --font-sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  h1 {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .panel-title {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    transition: background 0.3s;
+  }
+
+  .dot.connected { background: var(--green); }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  input, select {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    flex: 1;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  button {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-accent:hover { background: #5a4bd4; }
+  .btn-accent:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-green {
+    background: var(--green);
+    color: var(--bg);
+  }
+  .btn-green:hover { background: #00b8b3; }
+  .btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-yellow {
+    background: var(--yellow);
+    color: var(--bg);
+  }
+  .btn-yellow:hover { background: #f0c830; }
+
+  .btn-red {
+    background: var(--red);
+    color: white;
+  }
+  .btn-red:hover { background: #e55a5a; }
+
+  .btn-small {
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .log {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    height: 300px;
+    overflow-y: auto;
+    line-height: 1.8;
+    flex: 1;
+  }
+
+  .log-entry { margin-bottom: 2px; }
+  .log-entry.event { color: var(--green); }
+  .log-entry.sent { color: var(--yellow); }
+  .log-entry.error { color: var(--red); }
+  .log-entry.info { color: var(--muted); }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .option-btn {
+    padding: 12px;
+    font-size: 12px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-sans);
+    text-align: left;
+  }
+
+  .option-btn:hover {
+    border-color: var(--accent);
+    background: rgba(108, 92, 231, 0.1);
+  }
+
+  .question-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: none;
+  }
+
+  .question-text {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .question-meta {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-bottom: 12px;
+  }
+
+  .leaderboard {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: none;
+  }
+
+  .lb-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { color: var(--yellow); width: 30px; }
+  .lb-name { flex: 1; }
+  .lb-score { color: var(--green); }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>QuizHub Game Tester</h1>
+<p class="subtitle">Test WebSocket game flow – Host on left, Player on right</p>
+
+<div class="grid">
+  <!-- HOST PANEL -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="dot" id="hostDot"></span>
+      Host Control
+    </div>
+
+    <div class="input-group">
+      <input type="text" id="hostRoomId" placeholder="Room ID (UUID)">
+      <button class="btn-accent" onclick="connectHost()">Connect</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn-green btn-small" id="btnInit" onclick="hostSend('init')" disabled>Init Game</button>
+      <button class="btn-accent btn-small" id="btnNext" onclick="hostSend('next_question')" disabled>Next Question</button>
+      <button class="btn-yellow btn-small" id="btnResults" onclick="hostSend('show_results')" disabled>Show Results</button>
+      <button class="btn-red btn-small" id="btnEnd" onclick="hostSend('end_game')" disabled>End Game</button>
+    </div>
+
+    <div class="leaderboard" id="hostLeaderboard">
+      <div style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 8px; color: var(--muted);">LEADERBOARD</div>
+      <div id="hostLbContent"></div>
+    </div>
+
+    <div class="log" id="hostLog"></div>
+  </div>
+
+  <!-- PLAYER PANEL -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="dot" id="playerDot"></span>
+      Player
+    </div>
+
+    <div class="input-group">
+      <input type="text" id="playerRoomId" placeholder="Room ID (UUID)">
+      <button class="btn-accent" onclick="connectPlayer()">Connect</button>
+    </div>
+
+    <div class="input-group">
+      <input type="text" id="playerName" placeholder="Player name" value="Alice">
+      <button class="btn-green btn-small" id="btnJoin" onclick="playerJoin()" disabled>Join</button>
+    </div>
+
+    <div class="question-display" id="playerQuestion">
+      <div class="question-meta" id="questionMeta"></div>
+      <div class="question-text" id="questionText"></div>
+      <div class="options-grid" id="optionsGrid"></div>
+    </div>
+
+    <div class="leaderboard" id="playerLeaderboard">
+      <div style="font-family: var(--font-mono); font-size: 12px; margin-bottom: 8px; color: var(--muted);">LEADERBOARD</div>
+      <div id="playerLbContent"></div>
+    </div>
+
+    <div class="log" id="playerLog"></div>
+  </div>
+</div>
+
+<script>
+  let hostWs = null;
+  let playerWs = null;
+  const WS_BASE = `ws://${window.location.host}`;
+
+  function log(panelId, msg, type = 'info') {
+    const el = document.getElementById(panelId);
+    const time = new Date().toLocaleTimeString('en', {hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const div = document.createElement('div');
+    div.className = `log-entry ${type}`;
+    div.textContent = `[${time}] ${msg}`;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function renderLeaderboard(containerId, leaderboard) {
+    const el = document.getElementById(containerId);
+    el.parentElement.style.display = 'block';
+    el.innerHTML = '';
+    leaderboard.forEach(p => {
+      el.innerHTML += `<div class="lb-row"><span class="lb-rank">#${p.rank}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score}</span></div>`;
+    });
+  }
+
+  // ── HOST ──
+
+  function connectHost() {
+    const roomId = document.getElementById('hostRoomId').value.trim();
+    if (!roomId) return alert('Enter a Room ID');
+
+    hostWs = new WebSocket(`${WS_BASE}/ws/host/${roomId}`);
+
+    hostWs.onopen = () => {
+      document.getElementById('hostDot').classList.add('connected');
+      document.getElementById('btnInit').disabled = false;
+      document.getElementById('btnNext').disabled = false;
+      document.getElementById('btnResults').disabled = false;
+      document.getElementById('btnEnd').disabled = false;
+      log('hostLog', 'Connected to room', 'event');
+    };
+
+    hostWs.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      log('hostLog', `${data.event}: ${JSON.stringify(data)}`, 'event');
+
+      if (data.leaderboard) {
+        renderLeaderboard('hostLbContent', data.leaderboard);
+      }
+
+      if (data.event === 'room_initialized') {
+        log('hostLog', `Game ready: ${data.total_questions} questions, ${data.player_count} players`, 'info');
+      }
+
+      if (data.event === 'player_joined') {
+        log('hostLog', `${data.player_name} joined (${data.player_count} players)`, 'info');
+      }
+
+      if (data.event === 'answer_received') {
+        log('hostLog', `Answers: ${data.answers_count}/${data.player_count}`, 'info');
+      }
+
+      if (data.event === 'game_over') {
+        log('hostLog', 'GAME OVER', 'info');
+      }
+    };
+
+    hostWs.onclose = () => {
+      document.getElementById('hostDot').classList.remove('connected');
+      log('hostLog', 'Disconnected', 'error');
+    };
+
+    hostWs.onerror = () => log('hostLog', 'Connection error', 'error');
+  }
+
+  function hostSend(action) {
+    if (!hostWs) return;
+    const msg = {action};
+    hostWs.send(JSON.stringify(msg));
+    log('hostLog', `SENT: ${JSON.stringify(msg)}`, 'sent');
+  }
+
+  // ── PLAYER ──
+
+  function connectPlayer() {
+    const roomId = document.getElementById('playerRoomId').value.trim();
+    if (!roomId) return alert('Enter a Room ID');
+
+    playerWs = new WebSocket(`${WS_BASE}/ws/play/${roomId}`);
+
+    playerWs.onopen = () => {
+      document.getElementById('playerDot').classList.add('connected');
+      document.getElementById('btnJoin').disabled = false;
+      log('playerLog', 'Connected to room', 'event');
+    };
+
+    playerWs.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      log('playerLog', `${data.event}: ${JSON.stringify(data)}`, 'event');
+
+      if (data.event === 'joined') {
+        log('playerLog', `Joined as "${data.player_name}" (${data.player_id})`, 'info');
+      }
+
+      if (data.event === 'question_start') {
+        showQuestion(data.question);
+      }
+
+      if (data.event === 'answer_accepted') {
+        const status = data.is_correct ? 'CORRECT' : 'WRONG';
+        log('playerLog', `${status}! +${data.points} pts (${data.time_spent}s)`, data.is_correct ? 'event' : 'error');
+        document.getElementById('playerQuestion').style.display = 'none';
+      }
+
+      if (data.event === 'question_results' || data.event === 'game_over') {
+        if (data.leaderboard) {
+          renderLeaderboard('playerLbContent', data.leaderboard);
+        }
+        document.getElementById('playerQuestion').style.display = 'none';
+      }
+
+      if (data.event === 'game_over') {
+        log('playerLog', 'GAME OVER', 'info');
+      }
+    };
+
+    playerWs.onclose = () => {
+      document.getElementById('playerDot').classList.remove('connected');
+      log('playerLog', 'Disconnected', 'error');
+    };
+
+    playerWs.onerror = () => log('playerLog', 'Connection error', 'error');
+  }
+
+  function playerJoin() {
+    if (!playerWs) return;
+    const name = document.getElementById('playerName').value.trim() || 'Anonymous';
+    const msg = {action: 'join', name};
+    playerWs.send(JSON.stringify(msg));
+    log('playerLog', `SENT: ${JSON.stringify(msg)}`, 'sent');
+  }
+
+  function showQuestion(q) {
+    const qDiv = document.getElementById('playerQuestion');
+    qDiv.style.display = 'block';
+    document.getElementById('playerLeaderboard').style.display = 'none';
+    document.getElementById('questionMeta').textContent = `Question ${q.question_index + 1}/${q.total_questions} • ${q.time_limit}s`;
+    document.getElementById('questionText').textContent = q.text;
+
+    const grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt.text;
+      btn.onclick = () => {
+        const msg = {action: 'answer', option_id: opt.id};
+        playerWs.send(JSON.stringify(msg));
+        log('playerLog', `SENT: ${JSON.stringify(msg)}`, 'sent');
+        grid.querySelectorAll('.option-btn').forEach(b => b.style.opacity = '0.4');
+        btn.style.opacity = '1';
+        btn.style.borderColor = 'var(--accent)';
+      };
+      grid.appendChild(btn);
+    });
+  }
+</script>
+
+</body>
+</html>
