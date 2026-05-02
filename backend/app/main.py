@@ -7,6 +7,7 @@ from app.routers.collections import router as collections_router
 from app.routers.rooms import router as rooms_router
 from app.routers.game import router as game_router
 from app.routers.leaderboard import router as leaderboard_router
+from app.routers.game_history import router as game_history_router
 from app.core.redis import close_redis
 
 
@@ -32,6 +33,7 @@ app.include_router(collections_router)
 app.include_router(rooms_router)
 app.include_router(game_router)
 app.include_router(leaderboard_router)
+app.include_router(game_history_router)
 
 
 @app.get("/health")

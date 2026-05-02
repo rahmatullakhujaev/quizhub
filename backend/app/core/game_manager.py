@@ -132,7 +132,7 @@ class GameManager:
         """Record an answer and calculate score."""
         r = await get_redis()
 
-        # check if already answered
+        # check question answered
         existing = await r.hexists(self._answers_key(room_id, question_index), player_id)
         if existing:
             return {"error": "Already answered"}
