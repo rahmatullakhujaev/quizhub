@@ -9,6 +9,12 @@ from app.models.question import Question
 from app.models.collection import Collection
 from app.core.game_manager import game_manager
 from app.core.ws_manager import ws_manager
+from app.core.metrics import (
+    ACTIVE_ROOMS, ACTIVE_PLAYERS, PLAYERS_JOINED_TOTAL,
+    GAMES_STARTED_TOTAL, GAMES_FINISHED_TOTAL,
+    ANSWERS_TOTAL, ANSWER_TIME_SECONDS,
+    WS_CONNECTIONS_TOTAL, WS_DISCONNECTIONS_TOTAL,
+)
 
 router = APIRouter(tags=["game"])
 
@@ -58,6 +64,7 @@ async def host_websocket(websocket: WebSocket, room_id: str):
     db = None
     try:
         await ws_manager.connect_host(room_id, websocket)
+        WS_CONNECTIONS_TOTAL.labels(role="host").inc()
 
         while True:
             data = await websocket.receive_json()
@@ -81,6 +88,8 @@ async def host_websocket(websocket: WebSocket, room_id: str):
                     host_id=data.get("host_id", ""),
                     questions=questions,
                 )
+                ACTIVE_ROOMS.inc()
+                GAMES_STARTED_TOTAL.inc()
                 players = await game_manager.get_players(room_id)
                 await ws_manager.send_to_host(room_id, {
                     "event": "room_initialized",
@@ -95,6 +104,8 @@ async def host_websocket(websocket: WebSocket, room_id: str):
                 if question is None:
                     # no more questions — game over
                     await game_manager.set_room_status(room_id, "finished")
+                    GAMES_FINISHED_TOTAL.inc()
+                    ACTIVE_ROOMS.dec()
                     leaderboard = await game_manager.get_leaderboard(room_id)
                     await ws_manager.broadcast_to_all(room_id, {
                         "event": "game_over",
@@ -133,6 +144,8 @@ async def host_websocket(websocket: WebSocket, room_id: str):
 
             elif action == "end_game":
                 await game_manager.set_room_status(room_id, "finished")
+                GAMES_FINISHED_TOTAL.inc()
+                ACTIVE_ROOMS.dec()
                 leaderboard = await game_manager.get_leaderboard(room_id)
                 await ws_manager.broadcast_to_all(room_id, {
                     "event": "game_over",
@@ -140,6 +153,7 @@ async def host_websocket(websocket: WebSocket, room_id: str):
                 })
 
     except WebSocketDisconnect:
+        WS_DISCONNECTIONS_TOTAL.labels(role="host").inc()
         ws_manager.disconnect_host(room_id)
         await ws_manager.broadcast_to_players(room_id, {
             "event": "host_disconnected",
@@ -157,6 +171,7 @@ async def player_websocket(websocket: WebSocket, room_id: str):
 
     try:
         await ws_manager.connect_player(room_id, "pending", websocket)
+        WS_CONNECTIONS_TOTAL.labels(role="player").inc()
 
         while True:
             data = await websocket.receive_json()
@@ -165,6 +180,8 @@ async def player_websocket(websocket: WebSocket, room_id: str):
             if action == "join":
                 player_name = data.get("name", "Anonymous")
                 player_id = await game_manager.add_player(room_id, player_name)
+                ACTIVE_PLAYERS.inc()
+                PLAYERS_JOINED_TOTAL.inc()
 
                 # re-register with actual player_id
                 ws_manager.disconnect_player(room_id, "pending")
@@ -209,6 +226,8 @@ async def player_websocket(websocket: WebSocket, room_id: str):
                         "message": result["error"],
                     })
                 else:
+                    ANSWERS_TOTAL.labels(correct=str(result["is_correct"]).lower()).inc()
+                    ANSWER_TIME_SECONDS.observe(result["time_spent"])
                     # confirm to the player
                     await ws_manager.send_to_player(room_id, player_id, {
                         "event": "answer_accepted",
@@ -227,7 +246,9 @@ async def player_websocket(websocket: WebSocket, room_id: str):
                     })
 
     except WebSocketDisconnect:
+        WS_DISCONNECTIONS_TOTAL.labels(role="player").inc()
         if player_id:
+            ACTIVE_PLAYERS.dec()
             ws_manager.disconnect_player(room_id, player_id)
             await game_manager.remove_player(room_id, player_id)
             players = await game_manager.get_players(room_id)
